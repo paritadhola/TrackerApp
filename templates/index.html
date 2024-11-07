@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracker App</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #4CAF50; text-align: center; }
+        .tracker-form, .tracker-list { margin: 20px auto; max-width: 600px; }
+        .tracker-form input { width: 70%; padding: 8px; }
+        .tracker-form button { padding: 8px 16px; cursor: pointer; background-color: #4CAF50; color: #fff; border: none; }
+        .tracker-item { display: flex; justify-content: space-between; margin: 8px 0; padding: 8px; border: 1px solid #ddd; border-radius: 5px; }
+        .tracker-item button { cursor: pointer; background-color: #e74c3c; color: #fff; border: none; padding: 5px 10px; }
+    </style>
+</head>
+<body>
+    <h1>Tracker App</h1>
+
+    <!-- Input Form to Add a New Tracker Item -->
+    <div class="tracker-form">
+        <input type="text" id="trackerInput" placeholder="Enter item to track" />
+        <button onclick="addTracker()">Add Tracker</button>
+    </div>
+
+    <!-- List of Tracker Items -->
+    <div class="tracker-list">
+        <h2>Items You're Tracking</h2>
+        <div id="trackersList"></div>
+    </div>
+
+    <script>
+        const apiUrl = 'http://127.0.0.1:5000/trackers'; // URL for backend API
+
+        // Fetch all trackers from the server
+        async function fetchTrackers() {
+            try {
+                const response = await fetch(apiUrl);
+                const trackers = await response.json();
+                displayTrackers(trackers);
+            } catch (error) {
+                console.error("Error fetching trackers:", error);
+            }
+        }
+
+        // Display trackers in the list
+        function displayTrackers(trackers) {
+            const trackersList = document.getElementById('trackersList');
+            trackersList.innerHTML = ''; // Clear current list
+            trackers.forEach((tracker, index) => {
+                const div = document.createElement('div');
+                div.className = 'tracker-item';
+                div.innerHTML = `
+                    <span>${tracker.name}</span>
+                    <button onclick="deleteTracker(${index})">Delete</button>
+                `;
+                trackersList.appendChild(div);
+            });
+        }
+
+        // Add a new tracker item
+        async function addTracker() {
+            const trackerInput = document.getElementById('trackerInput');
+            const newTracker = { name: trackerInput.value };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newTracker)
+                });
+                if (response.ok) {
+                    trackerInput.value = ''; // Clear input field
+                    fetchTrackers(); // Refresh list
+                }
+            } catch (error) {
+                console.error("Error adding tracker:", error);
+            }
+        }
+
+        // Delete a tracker item
+        async function deleteTracker(index) {
+            try {
+                const response = await fetch(`${apiUrl}/${index}`, { method: 'DELETE' });
+                if (response.ok) {
+                    fetchTrackers(); // Refresh list
+                }
+            } catch (error) {
+                console.error("Error deleting tracker:", error);
+            }
+        }
+
+        // Initial load of trackers
+        fetchTrackers();
+    </script>
+</body>
+</html>
